@@ -14,6 +14,8 @@ import (
 type Config struct {
 	// DatabaseURL is a Postgres connection string (required).
 	DatabaseURL string
+	// HTTPAddr is the address the HTTP server listens on, e.g. ":8000".
+	HTTPAddr string
 	// DedupWindow is how long after an incident was last seen a repeat of the
 	// same error counts as a duplicate rather than a new incident.
 	DedupWindow time.Duration
@@ -36,6 +38,7 @@ type Config struct {
 }
 
 const (
+	defaultHTTPAddr           = ":8000"
 	defaultDedupWindowMinutes = 10
 	defaultGroqModel          = "openai/gpt-oss-120b"
 	defaultLLMMaxAttempts     = 3
@@ -50,6 +53,7 @@ func Load() (Config, error) {
 
 	cfg := Config{
 		DatabaseURL: os.Getenv("DATABASE_URL"),
+		HTTPAddr:    stringFromEnv("HTTP_ADDR", defaultHTTPAddr),
 		GroqAPIKey:  os.Getenv("GROQ_API_KEY"),
 		GroqModel:   stringFromEnv("GROQ_MODEL", defaultGroqModel),
 	}

@@ -8,13 +8,14 @@ import (
 
 // allVars is every variable Load reads; each test starts with them all cleared.
 var allVars = []string{
-	"DATABASE_URL", "DEDUP_WINDOW_MINUTES", "GROQ_API_KEY", "GROQ_MODEL",
+	"DATABASE_URL", "HTTP_ADDR", "DEDUP_WINDOW_MINUTES", "GROQ_API_KEY", "GROQ_MODEL",
 	"TASK_DECOMPOSITION", "LLM_MAX_ATTEMPTS", "LLM_RETRY_BACKOFF_SECONDS",
 }
 
 func TestLoad(t *testing.T) {
 	defaults := Config{
 		DatabaseURL:       "postgres://x",
+		HTTPAddr:          ":8000",
 		DedupWindow:       10 * time.Minute,
 		GroqModel:         "openai/gpt-oss-120b",
 		TaskDecomposition: false,
@@ -41,12 +42,12 @@ func TestLoad(t *testing.T) {
 		{
 			name: "everything set",
 			env: map[string]string{
-				"DATABASE_URL": "postgres://x", "DEDUP_WINDOW_MINUTES": "3", "GROQ_API_KEY": "gsk_test",
+				"DATABASE_URL": "postgres://x", "HTTP_ADDR": "127.0.0.1:9000", "DEDUP_WINDOW_MINUTES": "3", "GROQ_API_KEY": "gsk_test",
 				"GROQ_MODEL": "some/model", "TASK_DECOMPOSITION": "true", "LLM_MAX_ATTEMPTS": "5",
 				"LLM_RETRY_BACKOFF_SECONDS": "1.5",
 			},
 			want: Config{
-				DatabaseURL: "postgres://x", DedupWindow: 3 * time.Minute, GroqAPIKey: "gsk_test",
+				DatabaseURL: "postgres://x", HTTPAddr: "127.0.0.1:9000", DedupWindow: 3 * time.Minute, GroqAPIKey: "gsk_test",
 				GroqModel: "some/model", TaskDecomposition: true, LLMMaxAttempts: 5, LLMRetryBackoff: 1500 * time.Millisecond,
 			},
 		},

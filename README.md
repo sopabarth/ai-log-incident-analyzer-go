@@ -17,7 +17,7 @@ share anything with the Python service at runtime.
 | 1 | Domain types, log parser/normalizer | done |
 | 2 | Config, Postgres access, migrations, dedup | done |
 | 3 | Groq client: retry/fallback, task decomposition | done |
-| 4 | HTTP API (`POST /analyze-incident`, `GET /health`) | |
+| 4 | HTTP API (`POST /analyze-incident`, `GET /health`) | done |
 | 5 | Docker / compose | |
 | 6 | Eval command | |
 
@@ -36,8 +36,11 @@ internal/
   store/     Postgres access: create incidents, record duplicates, run migrations
   llm/       Groq over net/http behind a Completer interface; retry, fallback,
              task decomposition (app/llm_client.py)
+  incident/  the core flow: normalize -> hash -> dedup -> model -> save (HTTP-free)
+  api/       HTTP handlers, request validation, error mapping, logging middleware
 migrations/ goose SQL migrations, embedded into the binary
 cmd/
+  server/    the HTTP service
   migrate/   migrate [up|down|status] - the equivalent of `alembic upgrade head`
 ```
 
@@ -71,6 +74,71 @@ otherwise written in plain Go:
   `priority_reasoning` at 200 *characters*; `confidence` must be in `[0, 1]`.
 - `IncidentAnalysis` embeds `ClassificationResult` and `PriorityResult`, so
   the two decomposed LLM steps compose directly and the JSON stays flat.
+
+## API
+
+Plain `net/http` (Go 1.22 method+path routing), no framework.
+
+### `POST /analyze-incident`
+
+```json
+{
+  "service": "payments-api",
+  "environment": "prod",
+  "timestamp": "2026-09-10T12:31:00",
+  "raw_text": "Traceback (most recent call last): File \"app/db/session.py\", line 42, in get_connection conn = pool.acquire(timeout=5) psycopg2.OperationalError: timeout expired"
+}
+```
+
+All four fields are required. `environment` is `dev`, `staging` or `prod` (case-insensitive;
+`development` / `production` also work); `timestamp` is ISO 8601, and without an offset it is
+read as UTC. The response:
+
+```json
+{
+  "id": "bcae95be-...",
+  "service": "payments-api",
+  "environment": "prod",
+  "timestamp": "2026-09-10T12:31:00Z",
+  "raw_text_hash": "5aebf08c...",
+  "analysis": {
+    "category": "database_timeout",
+    "root_cause_summary": "A database operation timed out while acquiring a connection.",
+    "priority": "critical",
+    "priority_reasoning": "Database timeout in the production payments API blocks transactions.",
+    "confidence": 0.96,
+    "needs_human_review": false
+  },
+  "is_duplicate": false,
+  "duplicate_of_id": null,
+  "occurrence_count": 1,
+  "llm_retry_count": 0,
+  "llm_latency_ms": 942
+}
+```
+
+Sending the same error again within the dedup window returns the same incident with
+`is_duplicate: true`, `duplicate_of_id` set and `occurrence_count` bumped - without calling
+the model (about 3 ms instead of a second or more). "The same error" means the same
+*normalized* text, so differences in line endings, blank lines or indentation don't matter.
+
+| Status | When |
+|---|---|
+| 200 | analysed, or recognised as a duplicate |
+| 400 | body is not valid JSON, has more than one object, or `raw_text` is empty once normalized |
+| 413 | body larger than 1 MiB |
+| 422 | valid JSON but a field is missing or invalid; the message names it |
+| 502 | the model failed in a way retrying cannot fix (e.g. a rejected API key) |
+| 504 | the analysis took longer than 2 minutes |
+| 500 | anything else (the database, ...) |
+
+Errors are `{"detail": "..."}`. Internal detail is logged, never sent to the client. Unlike
+FastAPI, `detail` is a plain string rather than a list of validation objects, and malformed
+JSON is 400 rather than 422.
+
+### `GET /health`
+
+Liveness only: `{"status": "ok"}`. It does not touch the database.
 
 ## Database and dedup
 
@@ -138,13 +206,30 @@ about 6k of the free tier's 8000 tokens per minute:
 GROQ_LIVE_TEST=1 go test -run Live -v ./internal/llm
 ```
 
-## Development
+## Running it
 
 ```bash
 docker compose up -d --wait db      # Postgres on localhost:5433 (the Python project uses 5432)
-cp .env.example .env                # DATABASE_URL, GROQ_API_KEY, ...
+cp .env.example .env                # then put your GROQ_API_KEY in it
 go run ./cmd/migrate up             # apply migrations (also: down, status)
+go run ./cmd/server                 # listens on :8000 (HTTP_ADDR)
 ```
+
+The server refuses to start if migrations are pending, and shuts down gracefully on
+SIGINT/SIGTERM, finishing requests in flight.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `DATABASE_URL` | Postgres connection URL (required) | - |
+| `HTTP_ADDR` | address to listen on | `:8000` |
+| `GROQ_API_KEY` | Groq API key (required by the server) | - |
+| `GROQ_MODEL` | Groq model | `openai/gpt-oss-120b` |
+| `DEDUP_WINDOW_MINUTES` | how long after it was last seen a repeat counts as a duplicate | `10` |
+| `TASK_DECOMPOSITION` | `true`: classify then prioritize (two calls); `false`: one call | `false` |
+| `LLM_MAX_ATTEMPTS` | attempts per model step before falling back | `3` |
+| `LLM_RETRY_BACKOFF_SECONDS` | base wait between attempts | `0.5` |
+
+## Development
 
 Tests. Database tests are skipped unless `TEST_DATABASE_URL` is set; each one runs
 in its own throwaway schema, so they can run against the dev database:
@@ -153,6 +238,10 @@ in its own throwaway schema, so they can run against the dev database:
 go test ./...                      # everything that needs no database
 TEST_DATABASE_URL='postgres://root:root@localhost:5433/incident_analyzer?sslmode=disable' go test ./...
 ```
+
+With a database, `internal/api`'s end-to-end test runs the real stack (HTTP handler,
+incident service, analyzer, Postgres) with only the model faked: three identical errors cost
+one model call, and 30 simultaneous duplicates are counted exactly (2..31).
 
 Regenerating the golden parser data (needs the Python repo checked out):
 
