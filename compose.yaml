@@ -1,5 +1,10 @@
-# Postgres for local development. The Go service has its own database,
-# separate from the Python project's - host port 5433 so both can run at once.
+# Local stack: Postgres, a one-off migration job, and the API.
+#
+#   docker compose up -d --wait db     just the database, for running the Go code on the host
+#   docker compose up -d --build       everything: db -> migrate (runs once, must succeed) -> app
+#
+# This project has its own database, separate from the Python project's, and its
+# own host ports (db 5433, api 8001) so both stacks can run side by side.
 services:
   db:
     image: postgres:18-alpine
@@ -18,6 +23,45 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  # Applies pending migrations and exits. `app` waits for it to finish
+  # successfully, so the API never starts against an out-of-date schema - the
+  # same job `alembic upgrade head` does before uvicorn in the Python project.
+  migrate:
+    build: .
+    image: ai-log-incident-analyzer-go
+    entrypoint: ["/app/migrate"]
+    command: ["up"]
+    environment:
+      # Inside the compose network the database is "db", not localhost:5433.
+      DATABASE_URL: postgres://root:root@db:5432/incident_analyzer?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    image: ai-log-incident-analyzer-go
+    env_file:
+      # GROQ_API_KEY and the other settings. Optional here so `docker compose up db`
+      # works on a fresh checkout; the app itself says so if the key is missing.
+      - path: .env
+        required: false
+    environment:
+      # Overrides the host-side value from .env (see migrate above).
+      DATABASE_URL: postgres://root:root@db:5432/incident_analyzer?sslmode=disable
+      HTTP_ADDR: ":8000"
+    ports:
+      - "8001:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
 volumes:
   pgdata:

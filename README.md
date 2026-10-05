@@ -18,7 +18,7 @@ share anything with the Python service at runtime.
 | 2 | Config, Postgres access, migrations, dedup | done |
 | 3 | Groq client: retry/fallback, task decomposition | done |
 | 4 | HTTP API (`POST /analyze-incident`, `GET /health`) | done |
-| 5 | Docker / compose | |
+| 5 | Docker / compose | done |
 | 6 | Eval command | |
 
 ## Layout
@@ -39,6 +39,8 @@ internal/
   incident/  the core flow: normalize -> hash -> dedup -> model -> save (HTTP-free)
   api/       HTTP handlers, request validation, error mapping, logging middleware
 migrations/ goose SQL migrations, embedded into the binary
+Dockerfile  one image holding both programs (server, migrate)
+compose.yaml  db -> migrate (one-off job) -> app
 cmd/
   server/    the HTTP service
   migrate/   migrate [up|down|status] - the equivalent of `alembic upgrade head`
@@ -208,15 +210,38 @@ GROQ_LIVE_TEST=1 go test -run Live -v ./internal/llm
 
 ## Running it
 
+### Everything in Docker
+
 ```bash
-docker compose up -d --wait db      # Postgres on localhost:5433 (the Python project uses 5432)
+cp .env.example .env                # then put your GROQ_API_KEY in it
+docker compose up -d --build        # db -> migrate -> app
+curl localhost:8001/health          # the API is on host port 8001
+```
+
+Three services start in order. `db` is Postgres. `migrate` is a one-off job that applies
+pending migrations and exits; `app` has `depends_on: migrate: service_completed_successfully`,
+so a failed migration stops the API from starting at all (it stays in the `Created` state
+and compose reports `service "migrate" didn't complete successfully`) - the same guarantee
+the Python project gets from `alembic upgrade head && uvicorn`, but as a separate step. Both
+`migrate` and `app` run from one image (`Dockerfile`): a multi-stage build producing two
+static binaries on `alpine` (46 MB), running as a non-root user. The migrations are embedded
+in the `migrate` binary, so the image needs no SQL files. The container's `DATABASE_URL` is
+set in `compose.yaml` to point at `db`, overriding the host-side one in `.env`.
+
+Host ports are 5433 (db) and 8001 (api), so this stack and the Python project's (5432, 8000)
+can run side by side.
+
+### On the host, with only the database in Docker
+
+```bash
+docker compose up -d --wait db      # Postgres on localhost:5433
 cp .env.example .env                # then put your GROQ_API_KEY in it
 go run ./cmd/migrate up             # apply migrations (also: down, status)
 go run ./cmd/server                 # listens on :8000 (HTTP_ADDR)
 ```
 
 The server refuses to start if migrations are pending, and shuts down gracefully on
-SIGINT/SIGTERM, finishing requests in flight.
+SIGINT/SIGTERM, finishing requests in flight (in Docker, `docker stop` takes under a second).
 
 | Variable | Purpose | Default |
 |---|---|---|
