@@ -10,6 +10,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 
@@ -19,20 +20,31 @@ import (
 	"github.com/sopabarth/ai-log-incident-analyzer-go/internal/store"
 )
 
+// commands maps each subcommand to what it does. Looking the command up here,
+// before touching the database, means a typo fails fast and there is a single
+// place that knows the list.
+var commands = map[string]func(context.Context, *store.Store) error{
+	"up":     up,
+	"down":   down,
+	"status": status,
+}
+
 func main() {
+	log.SetFlags(0)
+	log.SetPrefix("migrate: ")
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "migrate:", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
 
 func run(args []string) error {
-	command := "up"
+	name := "up"
 	if len(args) > 0 {
-		command = args[0]
+		name = args[0]
 	}
-	if command != "up" && command != "down" && command != "status" {
-		return fmt.Errorf("unknown command %q (want up, down or status)", command)
+	command, ok := commands[name]
+	if !ok {
+		return fmt.Errorf("unknown command %q (want up, down or status)", name)
 	}
 
 	_ = godotenv.Load() // optional; variables already in the environment win
@@ -50,36 +62,43 @@ func run(args []string) error {
 	}
 	defer s.Close()
 
-	switch command {
-	case "up":
-		applied, err := s.Migrate(ctx)
-		for _, name := range applied {
-			fmt.Println("applied", name)
+	return command(ctx, s)
+}
+
+func up(ctx context.Context, s *store.Store) error {
+	applied, err := s.Migrate(ctx)
+	for _, name := range applied {
+		fmt.Println("applied", name)
+	}
+	if err != nil {
+		return err
+	}
+	if len(applied) == 0 {
+		fmt.Println("nothing to apply: database is up to date")
+	}
+	return nil
+}
+
+func down(ctx context.Context, s *store.Store) error {
+	name, err := s.RollbackOne(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("reverted", name)
+	return nil
+}
+
+func status(ctx context.Context, s *store.Store) error {
+	statuses, err := s.MigrationStatuses(ctx)
+	if err != nil {
+		return err
+	}
+	for _, st := range statuses {
+		state := "pending"
+		if st.Applied {
+			state = "applied"
 		}
-		if err != nil {
-			return err
-		}
-		if len(applied) == 0 {
-			fmt.Println("nothing to apply: database is up to date")
-		}
-	case "down":
-		name, err := s.RollbackOne(ctx)
-		if err != nil {
-			return err
-		}
-		fmt.Println("reverted", name)
-	case "status":
-		statuses, err := s.MigrationStatuses(ctx)
-		if err != nil {
-			return err
-		}
-		for _, st := range statuses {
-			state := "pending"
-			if st.Applied {
-				state = "applied"
-			}
-			fmt.Printf("%-8s %s\n", state, st.Name)
-		}
+		fmt.Printf("%-8s %s\n", state, st.Name)
 	}
 	return nil
 }
