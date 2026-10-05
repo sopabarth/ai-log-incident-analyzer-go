@@ -52,6 +52,9 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := cfg.RequireDatabase(); err != nil {
+		return err
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()

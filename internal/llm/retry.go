@@ -13,9 +13,10 @@ import (
 
 // outcome is one step's result and what it cost.
 type outcome[T any] struct {
-	value   T
-	latency time.Duration
-	retries int
+	value    T
+	latency  time.Duration
+	retries  int
+	fellBack bool // value is the fallback, not a model answer
 }
 
 // ask runs one pipeline step: it sends the prompts, decodes the reply as T, and
@@ -72,7 +73,7 @@ func ask[T domain.Reply](ctx context.Context, a *Analyzer, step, system, user st
 	}
 
 	log.Warn("all attempts failed, using fallback", "attempts", a.opts.MaxAttempts)
-	return outcome[T]{value: fallback, latency: time.Since(start), retries: a.opts.MaxAttempts - 1}, nil
+	return outcome[T]{value: fallback, latency: time.Since(start), retries: a.opts.MaxAttempts - 1, fellBack: true}, nil
 }
 
 // maxRetryAfter is the longest provider-requested wait we will honor. A rate

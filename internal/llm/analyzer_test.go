@@ -96,8 +96,8 @@ func TestSingleCall(t *testing.T) {
 	if res.Analysis != want {
 		t.Errorf("analysis = %+v, want %+v", res.Analysis, want)
 	}
-	if res.RetryCount != 0 || c.calls() != 1 {
-		t.Errorf("retries=%d calls=%d, want 0 and 1", res.RetryCount, c.calls())
+	if res.RetryCount != 0 || c.calls() != 1 || res.FellBack {
+		t.Errorf("retries=%d calls=%d fellBack=%v, want 0, 1 and false", res.RetryCount, c.calls(), res.FellBack)
 	}
 	if c.systems[0] != singleCallSystemPrompt {
 		t.Error("single-call mode must use the combined system prompt")
@@ -133,8 +133,8 @@ func TestExhaustedMalformedOutputFallsBack(t *testing.T) {
 	if res.Analysis != singleCallFallback {
 		t.Errorf("analysis = %+v, want the fallback", res.Analysis)
 	}
-	if res.RetryCount != 2 || c.calls() != 3 {
-		t.Errorf("retries=%d calls=%d, want 2 and 3", res.RetryCount, c.calls())
+	if res.RetryCount != 2 || c.calls() != 3 || !res.FellBack {
+		t.Errorf("retries=%d calls=%d fellBack=%v, want 2, 3 and true", res.RetryCount, c.calls(), res.FellBack)
 	}
 	if f := res.Analysis; f.Category != domain.CategoryUnknown || f.Confidence != 0 || !f.NeedsHumanReview || f.Priority != domain.PriorityMedium {
 		t.Errorf("fallback must be clearly marked as not a real classification: %+v", f)
@@ -292,8 +292,8 @@ func TestDecomposed(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if res.RetryCount != 3 || c.calls() != 5 {
-			t.Errorf("retries=%d calls=%d, want 3 and 5", res.RetryCount, c.calls())
+		if res.RetryCount != 3 || c.calls() != 5 || res.FellBack {
+			t.Errorf("retries=%d calls=%d fellBack=%v, want 3, 5 and false (retries that succeed are not fallbacks)", res.RetryCount, c.calls(), res.FellBack)
 		}
 	})
 
@@ -308,6 +308,9 @@ func TestDecomposed(t *testing.T) {
 		}
 		if res.Analysis.Priority != domain.PriorityCritical {
 			t.Errorf("priority = %q, want the real answer", res.Analysis.Priority)
+		}
+		if !res.FellBack {
+			t.Error("FellBack must be true when either step fell back")
 		}
 		if !strings.HasPrefix(c.users[3], "category: unknown\n") {
 			t.Errorf("priority step should be given the fallback category: %q", c.users[3])
@@ -325,6 +328,9 @@ func TestDecomposed(t *testing.T) {
 		}
 		if res.Analysis.Category != domain.CategoryAuthFailure || res.Analysis.PriorityResult != priorityFallback {
 			t.Errorf("analysis = %+v", res.Analysis)
+		}
+		if !res.FellBack {
+			t.Error("FellBack must be true when either step fell back")
 		}
 	})
 

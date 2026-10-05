@@ -62,9 +62,9 @@ func TestLoad(t *testing.T) {
 			want: with(func(c *Config) { c.TaskDecomposition = true }),
 		},
 		{
-			name:    "database url is required",
-			env:     map[string]string{},
-			wantErr: []string{"DATABASE_URL is required"},
+			name: "no database is fine for Load (RequireDatabase checks it)",
+			env:  map[string]string{},
+			want: with(func(c *Config) { c.DatabaseURL = "" }),
 		},
 		{
 			name:    "window must be a number",
@@ -110,7 +110,7 @@ func TestLoad(t *testing.T) {
 			name: "all problems are reported together",
 			env:  map[string]string{"DEDUP_WINDOW_MINUTES": "-1", "LLM_MAX_ATTEMPTS": "0", "TASK_DECOMPOSITION": "maybe"},
 			wantErr: []string{
-				"DATABASE_URL is required", "DEDUP_WINDOW_MINUTES must be positive",
+				"DEDUP_WINDOW_MINUTES must be positive",
 				"LLM_MAX_ATTEMPTS must be at least 1", "TASK_DECOMPOSITION must be true or false",
 			},
 		},
@@ -144,5 +144,14 @@ func TestLoad(t *testing.T) {
 				t.Errorf("got  %+v\nwant %+v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRequireDatabase(t *testing.T) {
+	if err := (Config{}).RequireDatabase(); err == nil || !strings.Contains(err.Error(), "DATABASE_URL is required") {
+		t.Errorf("an empty DatabaseURL must be rejected, got %v", err)
+	}
+	if err := (Config{DatabaseURL: "postgres://x"}).RequireDatabase(); err != nil {
+		t.Errorf("unexpected error: %v", err)
 	}
 }

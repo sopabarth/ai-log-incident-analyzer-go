@@ -40,6 +40,9 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	if err := cfg.RequireDatabase(); err != nil {
+		return err
+	}
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 	// SIGINT/SIGTERM start a graceful shutdown.

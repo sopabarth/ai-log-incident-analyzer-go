@@ -12,7 +12,9 @@ import (
 
 // Config holds the settings the service runs with.
 type Config struct {
-	// DatabaseURL is a Postgres connection string (required).
+	// DatabaseURL is a Postgres connection string. Load does not insist on it,
+	// because the eval command never touches the database; commands that do
+	// call RequireDatabase.
 	DatabaseURL string
 	// HTTPAddr is the address the HTTP server listens on, e.g. ":8000".
 	HTTPAddr string
@@ -45,6 +47,15 @@ const (
 	defaultLLMBackoffSeconds  = 0.5
 )
 
+// RequireDatabase reports an error if no database is configured. Commands that
+// use the database call it right after Load.
+func (c Config) RequireDatabase() error {
+	if c.DatabaseURL == "" {
+		return errors.New("invalid configuration: DATABASE_URL is required")
+	}
+	return nil
+}
+
 // Load reads the configuration from the environment. Every problem found is
 // reported at once rather than one per run.
 func Load() (Config, error) {
@@ -57,10 +68,6 @@ func Load() (Config, error) {
 		GroqAPIKey:  os.Getenv("GROQ_API_KEY"),
 		GroqModel:   stringFromEnv("GROQ_MODEL", defaultGroqModel),
 	}
-	if cfg.DatabaseURL == "" {
-		collect(errors.New("DATABASE_URL is required"))
-	}
-
 	minutes, err := intFromEnv("DEDUP_WINDOW_MINUTES", defaultDedupWindowMinutes)
 	switch {
 	case err != nil:

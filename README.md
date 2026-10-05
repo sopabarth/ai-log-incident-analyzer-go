@@ -19,7 +19,7 @@ share anything with the Python service at runtime.
 | 3 | Groq client: retry/fallback, task decomposition | done |
 | 4 | HTTP API (`POST /analyze-incident`, `GET /health`) | done |
 | 5 | Docker / compose | done |
-| 6 | Eval command | |
+| 6 | Eval command | done |
 
 ## Layout
 
@@ -38,12 +38,15 @@ internal/
              task decomposition (app/llm_client.py)
   incident/  the core flow: normalize -> hash -> dedup -> model -> save (HTTP-free)
   api/       HTTP handlers, request validation, error mapping, logging middleware
+  eval/      scoring against labeled logs: dataset, running, report (eval/run_eval.py)
+data/        synthetic_logs.json - 41 labeled logs, embedded into the eval binary
 migrations/ goose SQL migrations, embedded into the binary
 Dockerfile  one image holding both programs (server, migrate)
 compose.yaml  db -> migrate (one-off job) -> app
 cmd/
   server/    the HTTP service
   migrate/   migrate [up|down|status] - the equivalent of `alembic upgrade head`
+  eval/      scores the pipeline against data/synthetic_logs.json
 ```
 
 ## Parity with the Python implementation
@@ -207,6 +210,35 @@ about 6k of the free tier's 8000 tokens per minute:
 ```bash
 GROQ_LIVE_TEST=1 go test -run Live -v ./internal/llm
 ```
+
+## Eval
+
+`cmd/eval` runs the labeled logs in `data/synthetic_logs.json` (a copy of the Python
+project's file, so both implementations are scored against identical ground truth)
+through the real pipeline - normalizer, prompts, Groq, retry/fallback - and reports
+category accuracy with per-category precision/recall, priority exact match and mean
+distance, `needs_human_review` accuracy, latency and retry/fallback counts. It does not
+touch the database or dedup: every example is a fresh model call.
+
+```bash
+go run ./cmd/eval                      # mode follows TASK_DECOMPOSITION
+go run ./cmd/eval -mode both -save     # single call vs decomposed + comparison, JSON in eval/results/
+go run ./cmd/eval -limit 5             # first five examples only (cheap check)
+```
+
+Notes on reading the numbers:
+
+- Examples run one at a time. The free tier allows 8000 tokens per minute, so a full
+  `-mode both` run (about 120 calls) takes several minutes, much of it spent waiting out
+  429s via `Retry-After`. That waiting is included in latency, so the report gives mean,
+  median and max; the median is the figure to compare.
+- Priority is graded, not just right/wrong: the report shows how many levels off each
+  answer was (`critical` vs `high` is a smaller miss than `critical` vs `low`).
+- A **fallback** (a step that ran out of attempts) is scored as a miss like any other
+  answer but is counted and flagged `FALL` in the progress output, so a number dragged
+  down by an unreliable API can be told apart from one dragged down by the model's judgment.
+- `-save` writes per-example records (same keys as the Python eval's files, plus
+  `fell_back`) to `eval/results/`, which is gitignored.
 
 ## Running it
 

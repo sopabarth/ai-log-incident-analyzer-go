@@ -81,6 +81,9 @@ type Result struct {
 	// RetryCount is how many attempts beyond the first were needed, summed
 	// over the steps; 0 means every step succeeded first time.
 	RetryCount int
+	// FellBack is true if any step ran out of attempts and its part of
+	// Analysis is the fallback rather than a real answer.
+	FellBack bool
 }
 
 // Analyze classifies and prioritizes an incident from its normalized error
@@ -102,7 +105,7 @@ func (a *Analyzer) analyzeSingleCall(ctx context.Context, service string, env do
 	if err != nil {
 		return Result{}, err
 	}
-	return Result{Analysis: out.value, Latency: out.latency, RetryCount: out.retries}, nil
+	return Result{Analysis: out.value, Latency: out.latency, RetryCount: out.retries, FellBack: out.fellBack}, nil
 }
 
 // analyzeDecomposed asks two focused questions: what kind of error is this,
@@ -123,6 +126,7 @@ func (a *Analyzer) analyzeDecomposed(ctx context.Context, service string, env do
 		Analysis:   domain.IncidentAnalysis{ClassificationResult: c.value, PriorityResult: p.value},
 		Latency:    c.latency + p.latency,
 		RetryCount: c.retries + p.retries,
+		FellBack:   c.fellBack || p.fellBack,
 	}, nil
 }
 
