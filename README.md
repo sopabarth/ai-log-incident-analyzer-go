@@ -16,7 +16,7 @@ share anything with the Python service at runtime.
 |------|------|-------|
 | 1 | Domain types, log parser/normalizer | done |
 | 2 | Config, Postgres access, migrations, dedup | done |
-| 3 | Groq client: retry/fallback, task decomposition | |
+| 3 | Groq client: retry/fallback, task decomposition | done |
 | 4 | HTTP API (`POST /analyze-incident`, `GET /health`) | |
 | 5 | Docker / compose | |
 | 6 | Eval command | |
@@ -34,6 +34,8 @@ internal/
   parser/    raw log normalization + SHA-256 dedup hash (app/parser.py)
   config/    settings from environment variables
   store/     Postgres access: create incidents, record duplicates, run migrations
+  llm/       Groq over net/http behind a Completer interface; retry, fallback,
+             task decomposition (app/llm_client.py)
 migrations/ goose SQL migrations, embedded into the binary
 cmd/
   migrate/   migrate [up|down|status] - the equivalent of `alembic upgrade head`
@@ -89,11 +91,58 @@ slides - every duplicate refreshes `last_seen_at` - and a composite index on
 Known gap, same as the Python service: two *first* occurrences of a brand-new
 error arriving at the same instant both miss and both create an incident.
 
+## LLM analysis
+
+`llm.Analyzer` asks a chat model for the analysis. The provider sits behind a
+small interface, `Completer` (system prompt + user prompt in, reply text out); Groq
+is the first implementation, called over plain HTTP (Groq speaks the OpenAI wire
+format, so there is no SDK to depend on). The retry / fallback / decomposition
+logic only knows the interface, so it is tested with a scripted fake and a
+different provider can be added without touching it.
+
+**Retry and fallback.** Each model step is attempted up to `LLM_MAX_ATTEMPTS` times:
+
+| Failure | Behaviour |
+|---|---|
+| Unusable reply (bad JSON, missing field, out-of-range value) | retried immediately |
+| Rate limit (429), server error (5xx), network trouble, timeout | retried after n x `LLM_RETRY_BACKOFF_SECONDS`, or after the provider's `Retry-After` if that is longer (up to 60s) |
+| Still failing after the last attempt | **fallback**: category `unknown`, confidence 0, `needs_human_review`, priority `medium` |
+| Anything else (rejected API key, bad request) | returned as an error, not retried, not hidden behind a fallback |
+| The caller's context ends | stops at once, no further retries |
+
+The fallback is deliberately not a guess, and a broken deployment is deliberately
+not reported as an `unknown` incident - it has to be loud.
+
+**Why `Retry-After` matters.** Groq's free tier allows 8000 tokens per minute, which a
+burst of analyses (an eval run, say) exhausts. The limit resets after a few seconds,
+far longer than a 0.5s backoff, so without honoring `Retry-After` a rate-limited step
+would burn all its attempts in about a second and fall back. Groq does send the
+header on 429s (seen in practice: 1-3s), so the wait is exactly as long as needed.
+The Python service gets this from the `groq` SDK, which handles `Retry-After` itself;
+a hand-written HTTP client has to do it explicitly.
+
+**Task decomposition** (`TASK_DECOMPOSITION`, default `false`) splits the work into
+two focused calls - classify, then prioritize given the category - each with its own
+retry and fallback; latency and retry count are summed. Priority stays a model call
+rather than a `(category, environment)` lookup because the same category in the same
+environment legitimately gets different priorities depending on the blast radius
+described in the error text (the Python project's ground truth shows this).
+
+The prompts reuse the Python service's wording so eval results stay comparable.
+
+`TestGroqLive` calls the real API in both modes. It is opt-in - having a key in
+`.env` for the app must not make every `go test ./...` spend quota - and a run uses
+about 6k of the free tier's 8000 tokens per minute:
+
+```bash
+GROQ_LIVE_TEST=1 go test -run Live -v ./internal/llm
+```
+
 ## Development
 
 ```bash
 docker compose up -d --wait db      # Postgres on localhost:5433 (the Python project uses 5432)
-cp .env.example .env                # DATABASE_URL, DEDUP_WINDOW_MINUTES
+cp .env.example .env                # DATABASE_URL, GROQ_API_KEY, ...
 go run ./cmd/migrate up             # apply migrations (also: down, status)
 ```
 

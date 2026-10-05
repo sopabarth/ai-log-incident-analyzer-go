@@ -101,6 +101,33 @@ func ParseIncidentAnalysis(data []byte) (IncidentAnalysis, error) {
 	return IncidentAnalysis{ClassificationResult: c, PriorityResult: p}, nil
 }
 
+// Reply is the set of types a model's JSON reply can be decoded into: one per
+// pipeline step (classify, prioritize) and the combined single-call answer.
+type Reply interface {
+	ClassificationResult | PriorityResult | IncidentAnalysis
+}
+
+// ParseReply decodes and validates a model reply as T, using the matching
+// Parse function. It lets generic code ask for a result by type alone, without
+// being handed a decoder.
+func ParseReply[T Reply](data []byte) (T, error) {
+	var out T
+	var err error
+	switch p := any(&out).(type) {
+	case *ClassificationResult:
+		*p, err = ParseClassificationResult(data)
+	case *PriorityResult:
+		*p, err = ParsePriorityResult(data)
+	case *IncidentAnalysis:
+		*p, err = ParseIncidentAnalysis(data)
+	}
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	return out, nil
+}
+
 // checkMaxLen counts characters (runes), not bytes.
 func checkMaxLen(field, s string, limit int) error {
 	if n := utf8.RuneCountInString(s); n > limit {

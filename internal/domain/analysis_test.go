@@ -167,3 +167,27 @@ func TestIncidentAnalysisJSONIsFlat(t *testing.T) {
 		t.Errorf("round trip failed: got %+v, err %v", back, err)
 	}
 }
+
+func TestParseReply(t *testing.T) {
+	classification := `{"category":"unknown","root_cause_summary":"x","confidence":0.5,"needs_human_review":true}`
+	priority := `{"priority":"low","priority_reasoning":"y"}`
+	analysis := `{"category":"unknown","root_cause_summary":"x","confidence":0.5,"needs_human_review":true,"priority":"low","priority_reasoning":"y"}`
+
+	if got, err := ParseReply[ClassificationResult]([]byte(classification)); err != nil || got.Category != CategoryUnknown {
+		t.Errorf("ClassificationResult: got (%+v, %v)", got, err)
+	}
+	if got, err := ParseReply[PriorityResult]([]byte(priority)); err != nil || got.Priority != PriorityLow {
+		t.Errorf("PriorityResult: got (%+v, %v)", got, err)
+	}
+	if got, err := ParseReply[IncidentAnalysis]([]byte(analysis)); err != nil || got.Priority != PriorityLow || got.Category != CategoryUnknown {
+		t.Errorf("IncidentAnalysis: got (%+v, %v)", got, err)
+	}
+
+	// A reply that is valid for a different step is rejected, with a zero value.
+	if got, err := ParseReply[IncidentAnalysis]([]byte(classification)); err == nil || got != (IncidentAnalysis{}) {
+		t.Errorf("a classification is not a full analysis: got (%+v, %v)", got, err)
+	}
+	if got, err := ParseReply[PriorityResult]([]byte(`not json`)); err == nil || got != (PriorityResult{}) {
+		t.Errorf("garbage must fail with a zero value: got (%+v, %v)", got, err)
+	}
+}
