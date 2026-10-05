@@ -1,0 +1,23 @@
+# Postgres for local development. The Go service has its own database,
+# separate from the Python project's - host port 5433 so both can run at once.
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: incident_analyzer
+    ports:
+      - "5433:5432"
+    volumes:
+      # Postgres 18+ images expect the mount one level up, not at
+      # /var/lib/postgresql/data.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d incident_analyzer"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
