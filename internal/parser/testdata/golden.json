@@ -1,0 +1,373 @@
+[
+ {
+  "name": "synthetic/00-payments-api",
+  "raw": "Traceback (most recent call last):\n  File \"app/db/session.py\", line 42, in get_connection\n    conn = pool.acquire(timeout=5)\n  File \"app/services/payment.py\", line 88, in charge_card\n    with db.session() as session:\npsycopg2.OperationalError: timeout expired\n",
+  "max_frames": 5,
+  "normalized": "Traceback (most recent call last):\npsycopg2.OperationalError: timeout expired\nFile \"app/db/session.py\", line 42, in get_connection\nFile \"app/services/payment.py\", line 88, in charge_card",
+  "hash": "15f4a0cd330838dfefdd488f42993c0cb3e9d59f8c6d07ee1d2b0929c10520fd"
+ },
+ {
+  "name": "synthetic/01-orders-api",
+  "raw": "2026-09-10T12:01:04Z ERROR orders-api db_pool: could not acquire connection from pool within 5000ms, active=50 idle=0 waiting=127",
+  "max_frames": 5,
+  "normalized": "2026-09-10T12:01:04Z ERROR orders-api db_pool: could not acquire connection from pool within 5000ms, active=50 idle=0 waiting=127",
+  "hash": "3c7efc260ea8390a28501a37232d95fd3577b0f2b24c40c3bf3d45ecf3d1c763"
+ },
+ {
+  "name": "synthetic/02-reporting-service",
+  "raw": "com.reporting.db.QueryTimeoutException: Statement cancelled because timeout=30000ms exceeded, query=nightly_revenue_rollup\n\tat com.reporting.jobs.NightlyRollup.run(NightlyRollup.java:112)\n\tat java.base/java.lang.Thread.run(Thread.java:833)",
+  "max_frames": 5,
+  "normalized": "com.reporting.db.QueryTimeoutException: Statement cancelled because timeout=30000ms exceeded, query=nightly_revenue_rollup\nat com.reporting.jobs.NightlyRollup.run(NightlyRollup.java:112)\nat java.base/java.lang.Thread.run(Thread.java:833)",
+  "hash": "d6efeff264819c51f11d66a80e0a22adbd63b4e61828b91c3834b2418791ff39"
+ },
+ {
+  "name": "synthetic/03-inventory-service",
+  "raw": "pq: canceling statement due to statement timeout\n  at inventory.(*Repo).UpdateStock (repo.go:77)\n  at inventory.(*Handler).Reserve (handler.go:31)",
+  "max_frames": 5,
+  "normalized": "pq: canceling statement due to statement timeout\nat inventory.(*Repo).UpdateStock (repo.go:77)\nat inventory.(*Handler).Reserve (handler.go:31)",
+  "hash": "f749e5e3e4ac8149add2602df3dfb90bdd88cc37a71019f6f83c82be58c4ebd7"
+ },
+ {
+  "name": "synthetic/04-billing-service",
+  "raw": "MongoTimeoutError: Server selection timed out after 5000 ms, topology description: ReplicaSetNoPrimary\n    at Timeout._onTimeout (mongodb/lib/sdam/topology.js:298)",
+  "max_frames": 5,
+  "normalized": "MongoTimeoutError: Server selection timed out after 5000 ms, topology description: ReplicaSetNoPrimary\nat Timeout._onTimeout (mongodb/lib/sdam/topology.js:298)",
+  "hash": "31d467d1ba03dd770d77f8383609728fd81337c222e549270be35bec5ef8ef8e"
+ },
+ {
+  "name": "synthetic/05-user-service",
+  "raw": "sqlalchemy.exc.OperationalError: (mysql) Lock wait timeout exceeded; try restarting transaction",
+  "max_frames": 5,
+  "normalized": "sqlalchemy.exc.OperationalError: (mysql) Lock wait timeout exceeded; try restarting transaction",
+  "hash": "51971b844fb733e83a645cea72877f307053f5fe7b55a4a28898151958c078e0"
+ },
+ {
+  "name": "synthetic/06-checkout-worker",
+  "raw": "Exception in thread \"main\" java.lang.NullPointerException: Cannot invoke \"Cart.getItems()\" because \"cart\" is null\n\tat com.shop.checkout.CartService.finalize(CartService.java:64)\n\tat com.shop.checkout.CheckoutWorker.process(CheckoutWorker.java:29)",
+  "max_frames": 5,
+  "normalized": "Exception in thread \"main\" java.lang.NullPointerException: Cannot invoke \"Cart.getItems()\" because \"cart\" is null\nat com.shop.checkout.CartService.finalize(CartService.java:64)\nat com.shop.checkout.CheckoutWorker.process(CheckoutWorker.java:29)",
+  "hash": "cb39b9b97eed44317fee692175bed779602c6dd6e2246c4d402259523ace300f"
+ },
+ {
+  "name": "synthetic/07-recommendation-engine",
+  "raw": "Traceback (most recent call last):\n  File \"app/rank.py\", line 51, in score_items\n    weight = user.profile.preferences[\"category\"]\nAttributeError: 'NoneType' object has no attribute 'preferences'\n",
+  "max_frames": 5,
+  "normalized": "Traceback (most recent call last):\nAttributeError: 'NoneType' object has no attribute 'preferences'\nFile \"app/rank.py\", line 51, in score_items",
+  "hash": "c45a8d97dd172fbbf83916da5d7e9e6ce629f959e9e006fe017b50f4053d4e34"
+ },
+ {
+  "name": "synthetic/08-search-api",
+  "raw": "panic: runtime error: invalid memory address or nil pointer dereference\n[signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x4a5c31]\ngoroutine 42 [running]:\nmain.(*Index).Lookup(0x0, {0xc0001a4000, 0x8})\n\t/app/search/index.go:203 +0x1b",
+  "max_frames": 5,
+  "normalized": "panic: runtime error: invalid memory address or nil pointer dereference\n[signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x4a5c31]\nmain.(*Index).Lookup(0x0, {0xc0001a4000, 0x8})\ngoroutine 42 [running]:\n/app/search/index.go:203 +0x1b",
+  "hash": "008304a3754e4377872d51a134d6885acd2d8811a12de56e52352b09b45268ab"
+ },
+ {
+  "name": "synthetic/09-notifications-service",
+  "raw": "TypeError: Cannot read properties of undefined (reading 'email')\n    at buildPayload (src/notify/template.js:18:22)\n    at sendWelcomeEmail (src/notify/index.js:9:15)",
+  "max_frames": 5,
+  "normalized": "TypeError: Cannot read properties of undefined (reading 'email')\nat buildPayload (src/notify/template.js:18:22)\nat sendWelcomeEmail (src/notify/index.js:9:15)",
+  "hash": "01eb89402b9b0129cc28698d5522694853c0a10d8282b32eb96c697c3825206b"
+ },
+ {
+  "name": "synthetic/10-orders-api",
+  "raw": "kotlin.KotlinNullPointerException\n\tat com.shop.orders.OrderMapper.toDto(OrderMapper.kt:22)\n\tat com.shop.orders.OrderController.get(OrderController.kt:40)",
+  "max_frames": 5,
+  "normalized": "kotlin.KotlinNullPointerException\nat com.shop.orders.OrderMapper.toDto(OrderMapper.kt:22)\nat com.shop.orders.OrderController.get(OrderController.kt:40)",
+  "hash": "d90d2459748dac57e8551f3f76ba75f0386fcbe73e0d81c83260c1bce4649943"
+ },
+ {
+  "name": "synthetic/11-billing-service",
+  "raw": "Traceback (most recent call last):\n  File \"app/invoices.py\", line 30, in apply_discount\n    total = order.discount.percent * order.subtotal\nAttributeError: 'NoneType' object has no attribute 'percent'\n",
+  "max_frames": 5,
+  "normalized": "Traceback (most recent call last):\nAttributeError: 'NoneType' object has no attribute 'percent'\nFile \"app/invoices.py\", line 30, in apply_discount",
+  "hash": "1435e17fd55ec9c30d47d95c77245e1be0eb4c85375fdf409ec83bee31d27dbf"
+ },
+ {
+  "name": "synthetic/12-payments-api",
+  "raw": "2026-09-10T12:12:00Z ERROR payments-api stripe_client: request failed status=429 body={\"error\":\"rate_limit\",\"message\":\"Too many requests hit the API too quickly\"}",
+  "max_frames": 5,
+  "normalized": "2026-09-10T12:12:00Z ERROR payments-api stripe_client: request failed status=429 body={\"error\":\"rate_limit\",\"message\":\"Too many requests hit the API too quickly\"}",
+  "hash": "f29914a443cac0f47e7399e97013f51d753a7a4abda232114ae3ea6281fe647e"
+ },
+ {
+  "name": "synthetic/13-search-api",
+  "raw": "botocore.exceptions.ClientError: An error occurred (ThrottlingException) when calling the Query operation: Rate exceeded",
+  "max_frames": 5,
+  "normalized": "botocore.exceptions.ClientError: An error occurred (ThrottlingException) when calling the Query operation: Rate exceeded",
+  "hash": "2b6ab082b6f11b98ce57f5b678961d09de495b39110a28f1ddc0a37c70edca59"
+ },
+ {
+  "name": "synthetic/14-email-worker",
+  "raw": "429 Too Many Requests from sendgrid.com: \"Maximum credits exceeded, upgrade plan or wait for reset\"",
+  "max_frames": 5,
+  "normalized": "429 Too Many Requests from sendgrid.com: \"Maximum credits exceeded, upgrade plan or wait for reset\"",
+  "hash": "a1f55aa24d4539f2adf1f1e56e7212b913a4a5e065ace849d4e6ea6f05ff6c7f"
+ },
+ {
+  "name": "synthetic/15-user-service",
+  "raw": "WARN rate_limiter: client_id=mobile-app blocked, 429 responses sustained for 3m, threshold=100req/s",
+  "max_frames": 5,
+  "normalized": "WARN rate_limiter: client_id=mobile-app blocked, 429 responses sustained for 3m, threshold=100req/s",
+  "hash": "6700b3a0656160b24e0db4883b36f108852e12593da00a5716235ed207feac21"
+ },
+ {
+  "name": "synthetic/16-inventory-service",
+  "raw": "redis.exceptions.ResponseError: rate limit exceeded for key stock_sync:staging, retry_after=12s",
+  "max_frames": 5,
+  "normalized": "redis.exceptions.ResponseError: rate limit exceeded for key stock_sync:staging, retry_after=12s",
+  "hash": "b14aa5064c6a144f2058c707e6c43341cf94efbe19d717a6a656cce525e281bc"
+ },
+ {
+  "name": "synthetic/17-reporting-service",
+  "raw": "requests.exceptions.HTTPError: 429 Client Error: Too Many Requests for url: https://api.analytics.dev/export",
+  "max_frames": 5,
+  "normalized": "requests.exceptions.HTTPError: 429 Client Error: Too Many Requests for url: https://api.analytics.dev/export",
+  "hash": "d11ae72f344c94435b8f2298b1c6751689f2e4d8eb4bf5f1094d2bb7e36285f7"
+ },
+ {
+  "name": "synthetic/18-auth-gateway",
+  "raw": "2026-09-10T12:18:00Z ERROR auth-gateway jwt: token validation failed for all incoming requests since 12:15 - signing key rotation mismatch, kid=2026-09-a not found in JWKS cache",
+  "max_frames": 5,
+  "normalized": "2026-09-10T12:18:00Z ERROR auth-gateway jwt: token validation failed for all incoming requests since 12:15 - signing key rotation mismatch, kid=2026-09-a not found in JWKS cache",
+  "hash": "d34647de396112d097293470761f281fa669c78f2c1e1c2b7a330fa94a87e8ca"
+ },
+ {
+  "name": "synthetic/19-user-service",
+  "raw": "401 Unauthorized: invalid credentials for user_id=88213, attempt=4, account temporarily locked",
+  "max_frames": 5,
+  "normalized": "401 Unauthorized: invalid credentials for user_id=88213, attempt=4, account temporarily locked",
+  "hash": "a18b3900fbd1cc43aba5aa74ac4571a62f5b5a53ed6e38e84781ab3ada220c86"
+ },
+ {
+  "name": "synthetic/20-orders-api",
+  "raw": "oauth2.errors.InvalidGrantError: refresh token expired for service_account=orders-to-warehouse-sync, cannot refresh access token",
+  "max_frames": 5,
+  "normalized": "oauth2.errors.InvalidGrantError: refresh token expired for service_account=orders-to-warehouse-sync, cannot refresh access token",
+  "hash": "4524e7f1ae334e1e1b9e2d02551bfd882e80fd9ee752c0493aba212fac20a60a"
+ },
+ {
+  "name": "synthetic/21-notifications-service",
+  "raw": "LDAPBindError: Invalid credentials (staging-service-account), bind failed against ldap://staging-directory:389",
+  "max_frames": 5,
+  "normalized": "LDAPBindError: Invalid credentials (staging-service-account), bind failed against ldap://staging-directory:389",
+  "hash": "d4da58447c621529a3bddda20d6977a3299c707139bc3c8c71e0b46a3094ab73"
+ },
+ {
+  "name": "synthetic/22-billing-service",
+  "raw": "403 Forbidden: API key 'live_sk_***7f2a' was revoked on 2026-09-09, all requests to /v1/charges rejected",
+  "max_frames": 5,
+  "normalized": "403 Forbidden: API key 'live_sk_***7f2a' was revoked on 2026-09-09, all requests to /v1/charges rejected",
+  "hash": "d566b017a990987d005132719372133505cfd90b469123cb1f854a8c78507519"
+ },
+ {
+  "name": "synthetic/23-search-api",
+  "raw": "AuthenticationError: no API key provided (did you forget to set SEARCH_API_KEY in .env.local?)",
+  "max_frames": 5,
+  "normalized": "AuthenticationError: no API key provided (did you forget to set SEARCH_API_KEY in .env.local?)",
+  "hash": "1d60579374898d071dc88880c68a4eb768efc6d1e5e4c236a190ff7033f1f177"
+ },
+ {
+  "name": "synthetic/24-checkout-worker",
+  "raw": "2026-09-10T12:24:00Z WARN checkout-worker http_client: connection reset by peer calling shipping-api.internal, retry 1/3 succeeded after 340ms",
+  "max_frames": 5,
+  "normalized": "2026-09-10T12:24:00Z WARN checkout-worker http_client: connection reset by peer calling shipping-api.internal, retry 1/3 succeeded after 340ms",
+  "hash": "04a736b84c550ae90a9b1f4a627be28a91134b6aa0e7bd2aac01057b11bd8d2f"
+ },
+ {
+  "name": "synthetic/25-orders-api",
+  "raw": "grpc: rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing dial tcp 10.2.4.18:9090: i/o timeout\", target=inventory-service, affected_requests=~15% over last 5 min",
+  "max_frames": 5,
+  "normalized": "grpc: rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing dial tcp 10.2.4.18:9090: i/o timeout\", target=inventory-service, affected_requests=~15% over last 5 min",
+  "hash": "906eecc2ae9b3c8f0c04db74040fc6e61b6dd88456f3c698913808abfdd37381"
+ },
+ {
+  "name": "synthetic/26-user-service",
+  "raw": "ERROR dns_resolver: intermittent NXDOMAIN for auth-gateway.internal, ~8% of lookups failing, falling back to cached IP",
+  "max_frames": 5,
+  "normalized": "ERROR dns_resolver: intermittent NXDOMAIN for auth-gateway.internal, ~8% of lookups failing, falling back to cached IP",
+  "hash": "f6c4f1918573961a1c29bbca4bda4848ce458e378a3439f23a909fdcca3cd760"
+ },
+ {
+  "name": "synthetic/27-reporting-service",
+  "raw": "requests.exceptions.ConnectionError: HTTPSConnectionPool(host='staging-warehouse.internal', port=443): Max retries exceeded, Connection reset by peer",
+  "max_frames": 5,
+  "normalized": "requests.exceptions.ConnectionError: HTTPSConnectionPool(host='staging-warehouse.internal', port=443): Max retries exceeded, Connection reset by peer",
+  "hash": "75287e8cba308df76b0392fca68b40b7a5f7779bc63996ba409665dc2ca09673"
+ },
+ {
+  "name": "synthetic/28-payments-api",
+  "raw": "SSLError: [SSL: HANDSHAKE_FAILURE] TLS handshake failed connecting to fraud-check.internal, cert appears expired",
+  "max_frames": 5,
+  "normalized": "SSLError: [SSL: HANDSHAKE_FAILURE] TLS handshake failed connecting to fraud-check.internal, cert appears expired",
+  "hash": "f3062489791046b7c92ba271be402705b1e8c171c0544d4986fb22a033310268"
+ },
+ {
+  "name": "synthetic/29-notifications-service",
+  "raw": "socket.timeout: connection to push-gateway.dev timed out after 2000ms, no retry configured",
+  "max_frames": 5,
+  "normalized": "socket.timeout: connection to push-gateway.dev timed out after 2000ms, no retry configured",
+  "hash": "3d25aab5f5dd0d5817ff6f0fe14a17c77a87515a3298689dd2d98b2ae6ffeb79"
+ },
+ {
+  "name": "synthetic/30-orders-api",
+  "raw": "pydantic.error_wrappers.ValidationError: 1 validation error for CreateOrderRequest\nquantity\n  ensure this value is greater than 0 (type=value_error.number.not_gt; limit_value=0)",
+  "max_frames": 5,
+  "normalized": "pydantic.error_wrappers.ValidationError: 1 validation error for CreateOrderRequest\nquantity\nensure this value is greater than 0 (type=value_error.number.not_gt; limit_value=0)",
+  "hash": "732ff38e045780aa17f95126da9bac04d633295dd264afc15c57ec6f6dce47ae"
+ },
+ {
+  "name": "synthetic/31-user-service",
+  "raw": "400 Bad Request: JSON body missing required field 'email' at /v1/users/register, malformed_requests=340 in last 10 min",
+  "max_frames": 5,
+  "normalized": "400 Bad Request: JSON body missing required field 'email' at /v1/users/register, malformed_requests=340 in last 10 min",
+  "hash": "92feb575f8d734a62c25931a672dd668eeba764b7f76c9737acceccc629b2629"
+ },
+ {
+  "name": "synthetic/32-billing-service",
+  "raw": "jakarta.validation.ConstraintViolationException: charge.amountCents: must be greater than or equal to 1",
+  "max_frames": 5,
+  "normalized": "jakarta.validation.ConstraintViolationException: charge.amountCents: must be greater than or equal to 1",
+  "hash": "31030ccd6f562dac77a7635bab3fb04b554936835552b0f4cf9481177dc01cd9"
+ },
+ {
+  "name": "synthetic/33-inventory-service",
+  "raw": "json.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 42 (char 41), payload truncated at 41 bytes",
+  "max_frames": 5,
+  "normalized": "json.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 42 (char 41), payload truncated at 41 bytes",
+  "hash": "f823dd6f08c5480a8ec39cbf1f8b0f3ac1e284609f284dc0f54df7c8a4d0b208"
+ },
+ {
+  "name": "synthetic/34-search-api",
+  "raw": "ValueError: invalid enum value 'sort_by=popularityy' - expected one of ['relevance', 'price', 'popularity']",
+  "max_frames": 5,
+  "normalized": "ValueError: invalid enum value 'sort_by=popularityy' - expected one of ['relevance', 'price', 'popularity']",
+  "hash": "caa87436cf946a7d50bca8ab25c89cad34a7a67b278bf327d6c9c1ffd85fece8"
+ },
+ {
+  "name": "synthetic/35-orders-api",
+  "raw": "marshmallow.exceptions.ValidationError: {'shipping_address': ['Missing data for required field.']}",
+  "max_frames": 5,
+  "normalized": "marshmallow.exceptions.ValidationError: {'shipping_address': ['Missing data for required field.']}",
+  "hash": "5feea88a5676ec46466f413792dc3ee1d25fba9ff24c6f4ea08561dd5599d305"
+ },
+ {
+  "name": "synthetic/36-checkout-worker",
+  "raw": "ERROR: something went wrong. code=7 retrying...",
+  "max_frames": 5,
+  "normalized": "ERROR: something went wrong. code=7 retrying...",
+  "hash": "84809e93e25fd0d421e8af2a09d7977546873b88909955710a30a96f67c0aca7"
+ },
+ {
+  "name": "synthetic/37-payments-api",
+  "raw": "kernel: [123456.789] Out of memory: Killed process 4821 (python3) total-vm:4129852kB, anon-rss:3980112kB",
+  "max_frames": 5,
+  "normalized": "kernel: [123456.789] Out of memory: Killed process 4821 (python3) total-vm:4129852kB, anon-rss:3980112kB",
+  "hash": "2bc769918277980a67b3323fb7937b6876c457f406d7a2a8a5cf6e949d21a188"
+ },
+ {
+  "name": "synthetic/38-orders-api",
+  "raw": "\\x00\\x00garbled\\xffoutput\\x1b[31mSEG\\x1b[0mFAULT??core dumped @ 0x7fff",
+  "max_frames": 5,
+  "normalized": "\\x00\\x00garbled\\xffoutput\\x1b[31mSEG\\x1b[0mFAULT??core dumped @ 0x7fff",
+  "hash": "9ae9e897ca56a4e597927e526e7687da3ce3dba3e0dc8b57fd30d4174145f2fa"
+ },
+ {
+  "name": "synthetic/39-recommendation-engine",
+  "raw": "custom_metric_alert: model_drift_score=0.83 exceeded threshold=0.7, no exception raised, model still serving",
+  "max_frames": 5,
+  "normalized": "custom_metric_alert: model_drift_score=0.83 exceeded threshold=0.7, no exception raised, model still serving",
+  "hash": "3b13806be6fdbfc7a6cc59e98638790ac0f410364b2c28ae16ee5c545c11b8fa"
+ },
+ {
+  "name": "synthetic/40-inventory-service",
+  "raw": "WARN: retrying operation (attempt 2)",
+  "max_frames": 5,
+  "normalized": "WARN: retrying operation (attempt 2)",
+  "hash": "28d621119b03417685b86d8a572ee5c687cead9365266584da295f2309e40dc2"
+ },
+ {
+  "name": "edge/empty",
+  "raw": "",
+  "max_frames": 5,
+  "normalized": "",
+  "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ {
+  "name": "edge/only-whitespace",
+  "raw": "  \n\t\n   \n",
+  "max_frames": 5,
+  "normalized": "",
+  "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ {
+  "name": "edge/crlf",
+  "raw": "boom\r\n  at a.b.C.d(C.java:1)\r\n  at e.f.G.h(G.java:2)\r\n",
+  "max_frames": 5,
+  "normalized": "boom\nat a.b.C.d(C.java:1)\nat e.f.G.h(G.java:2)",
+  "hash": "eef299ad15cd6446e7c5078e17afdb680d9a51ec27eb32befa90b330d38e7ca9"
+ },
+ {
+  "name": "edge/many-frames-truncated",
+  "raw": "ValueError: bad thing\n  at pkg.mod.func0(file0.py:0)\n  at pkg.mod.func1(file1.py:1)\n  at pkg.mod.func2(file2.py:2)\n  at pkg.mod.func3(file3.py:3)\n  at pkg.mod.func4(file4.py:4)\n  at pkg.mod.func5(file5.py:5)\n  at pkg.mod.func6(file6.py:6)\n  at pkg.mod.func7(file7.py:7)\n  at pkg.mod.func8(file8.py:8)\n  at pkg.mod.func9(file9.py:9)",
+  "max_frames": 5,
+  "normalized": "ValueError: bad thing\nat pkg.mod.func0(file0.py:0)\nat pkg.mod.func1(file1.py:1)\nat pkg.mod.func2(file2.py:2)\nat pkg.mod.func3(file3.py:3)\nat pkg.mod.func4(file4.py:4)\n... (5 more frames truncated)",
+  "hash": "75360bc0896adae36ac27816cdc378bd3a498be3f716f6ff50a83fcce695fa17"
+ },
+ {
+  "name": "edge/python-source-echo-dropped",
+  "raw": "Traceback (most recent call last):\n  File \"a.py\", line 1, in f\n    x = 1\n  File \"b.py\", line 2, in g\n    y = 2\n  File \"c.py\", line 3, in h\n    z = 3\nKeyError: 'k'\n",
+  "max_frames": 5,
+  "normalized": "Traceback (most recent call last):\nKeyError: 'k'\nFile \"a.py\", line 1, in f\nFile \"b.py\", line 2, in g\nFile \"c.py\", line 3, in h",
+  "hash": "9af5b507dc9c0e6b2a82c52a713641912a67e82b0b02da4ebfd69d9c38489514"
+ },
+ {
+  "name": "edge/leading-trailing-newlines",
+  "raw": "\n\n  ERROR: x\n\n",
+  "max_frames": 5,
+  "normalized": "ERROR: x",
+  "hash": "9fb5d60ebb46ad5f01b9ec626e5dbff48ffa282611327e6ea6b7bb6693b6f324"
+ },
+ {
+  "name": "edge/unicode-text",
+  "raw": "Greška: šđčćž — 日本語\n  at x.Y.z(Y.java:9)",
+  "max_frames": 5,
+  "normalized": "Greška: šđčćž — 日本語\nat x.Y.z(Y.java:9)",
+  "hash": "65b4320438de0aed2b39b205556084d2b6a4e4ea9c0fe99bc10452a4f59e9db9"
+ },
+ {
+  "name": "edge/go-panic",
+  "raw": "panic: x\n\ngoroutine 1 [running]:\nmain.f()\n\t/app/main.go:10 +0x1b\n",
+  "max_frames": 5,
+  "normalized": "panic: x\nmain.f()\ngoroutine 1 [running]:\n/app/main.go:10 +0x1b",
+  "hash": "84a0cbf86f2f1930173fced51a0c40b74c1698f32e566c12bbe7287546c6a8e9"
+ },
+ {
+  "name": "edge/bare-file-line",
+  "raw": "oops\nserver.go:77\nhandler.kt:12 extra",
+  "max_frames": 5,
+  "normalized": "oops\nserver.go:77\nhandler.kt:12 extra",
+  "hash": "ffc7437f543b3d462972ff89d780202d667f9b97351c28eaf0490e1492a0988e"
+ },
+ {
+  "name": "edge/at-no-space",
+  "raw": "at\nattempt failed\nat x",
+  "max_frames": 5,
+  "normalized": "at\nattempt failed\nat x",
+  "hash": "183c8d266a6519df31ffa2535c84f681ad16dc10e27de52ba4c2e0aff6939471"
+ },
+ {
+  "name": "edge/max-frames-2",
+  "raw": "ValueError: bad thing\n  at pkg.mod.func0(file0.py:0)\n  at pkg.mod.func1(file1.py:1)\n  at pkg.mod.func2(file2.py:2)\n  at pkg.mod.func3(file3.py:3)\n  at pkg.mod.func4(file4.py:4)\n  at pkg.mod.func5(file5.py:5)\n  at pkg.mod.func6(file6.py:6)\n  at pkg.mod.func7(file7.py:7)\n  at pkg.mod.func8(file8.py:8)\n  at pkg.mod.func9(file9.py:9)",
+  "max_frames": 2,
+  "normalized": "ValueError: bad thing\nat pkg.mod.func0(file0.py:0)\nat pkg.mod.func1(file1.py:1)\n... (8 more frames truncated)",
+  "hash": "bb05589a6ab9b7665faff8cc1f3df352de110d1cb15021d285a4d832084dfad4"
+ },
+ {
+  "name": "edge/max-frames-0",
+  "raw": "ValueError: bad thing\n  at pkg.mod.func0(file0.py:0)\n  at pkg.mod.func1(file1.py:1)\n  at pkg.mod.func2(file2.py:2)\n  at pkg.mod.func3(file3.py:3)\n  at pkg.mod.func4(file4.py:4)\n  at pkg.mod.func5(file5.py:5)\n  at pkg.mod.func6(file6.py:6)\n  at pkg.mod.func7(file7.py:7)\n  at pkg.mod.func8(file8.py:8)\n  at pkg.mod.func9(file9.py:9)",
+  "max_frames": 0,
+  "normalized": "ValueError: bad thing\n... (10 more frames truncated)",
+  "hash": "5ffa050f1a8648652da108d59892bbead02d6ace36755f8526bfbdf5363a1378"
+ }
+]
