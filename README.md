@@ -240,6 +240,32 @@ Notes on reading the numbers:
 - `-save` writes per-example records (same keys as the Python eval's files, plus
   `fell_back`) to `eval/results/`, which is gitignored.
 
+### Results
+
+One run of `-mode both` on all 41 logs, `openai/gpt-oss-120b` (the Python project's numbers
+for the same dataset and model in the last column):
+
+| | single call | decomposed | Python single / decomposed |
+|---|---|---|---|
+| category accuracy | 97.6% (40/41) | 97.6% (40/41) | 95.1% / 97.6% |
+| priority exact match | 56.1% (23/41) | 68.3% (28/41) | 63.4% / 75.6% |
+| priority mean distance | 0.46 | 0.37 | - |
+| needs_human_review accuracy | 100% | 97.6% | - |
+| median latency | 1.2 s | 5.3 s | - |
+| retries / fallbacks | 21 / 0 | 80 / 0 | - |
+
+- Both modes miss the same single log (a vague `inventory-service` error with no
+  operation or cause, labeled `unknown`, called `network_partial_failure` at confidence
+  0.3-0.4).
+- Decomposition improves priority (+12 points exact, smaller average error) at about 4x the
+  median latency; it makes two calls, and under the free tier's token limit it hits 429s
+  far more often (80 retries vs 21), all absorbed by `Retry-After` with no fallbacks.
+- It mostly lowers priorities (`high` -> `medium`/`low`), which is what the labels want; it
+  also overshoots in a few cases (`high` -> `critical`).
+- This is a single run on 41 examples with a non-deterministic model: one example is 2.4
+  points, so differences of that size (the category accuracy gap with Python, for one) are
+  noise. The priority gap between the modes is consistent across both implementations.
+
 ## Running it
 
 ### Everything in Docker
